@@ -411,7 +411,7 @@ function buildReport(rawNumber, phoneInfo) {
 ❧ Generado por
 > 𝕳𝖎𝖓𝖆𝖙𝖆 𝕭𝖔𝖙
 
-⚠️ _Simulación. Solo el número, país y operadora son reales. El resto es ficticio._`.trim()
+⚠️`.trim()
 }
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
