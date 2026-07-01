@@ -274,7 +274,9 @@ const participants = m.isGroup ? (groupMetadata.participants || []) : []
 if (m.isGroup && participants.length) registerParticipants(participants)
 
 // Normalizar m.sender si es LID
-m.sender = resolveToReal(m.sender)  
+const resolvedSender = resolveToReal(m.sender)
+if (resolvedSender !== m.sender) m._sender = resolvedSender 
+    
 const user = participants.find(p => p.id === senderLid || p.id === senderJid) || {}
 const bot = participants.find(p => p.id === botLid || p.id === botJid) || {}
 const isRAdmin = user?.admin === "superadmin"
