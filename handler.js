@@ -270,6 +270,11 @@ const senderJid = m.sender
 const botJid = conn.user.jid
 const groupMetadata = m.isGroup ? ((conn.chats[m.chat] || {}).metadata || await this.groupMetadata(m.chat).catch(_ => null)) : {}
 const participants = m.isGroup ? (groupMetadata.participants || []) : []
+// Registrar participantes para cache LID↔JID
+if (m.isGroup && participants.length) registerParticipants(participants)
+
+// Normalizar m.sender si es LID
+m.sender = resolveToReal(m.sender)  
 const user = participants.find(p => p.id === senderLid || p.id === senderJid) || {}
 const bot = participants.find(p => p.id === botLid || p.id === botJid) || {}
 const isRAdmin = user?.admin === "superadmin"
