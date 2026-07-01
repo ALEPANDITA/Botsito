@@ -1,4 +1,37 @@
-import { promises as fs } from 'fs'  // <-- ESM import
+import { promises as fs } from 'fs'
+
+const MAIN_IDS = ['5217732654942@s.whatsapp.net', '573223090406@s.whatsapp.net']
+
+function norm(v) {
+  return String(v || '').toLowerCase().trim()
+}
+
+async function mergeMyClones() {
+  const users = global.db.data.users || {}
+  const entries = Object.entries(users)
+
+  const clones = entries.filter(([jid, u]) => {
+    const name = norm(u.name)
+    return !MAIN_IDS.includes(jid) && (name.includes('brayanrk') || name.includes('draven'))
+  })
+
+  if (!clones.length) return
+
+  const canonical = MAIN_IDS.find(id => users[id]) || clones[0][0]
+  const base = users[canonical] || (users[canonical] = { diamantes: 0, bank: 0, exp: 0, level: 0 })
+
+  for (const [jid, u] of clones) {
+    if (jid === canonical) continue
+    base.diamantes = (base.diamantes || 0) + (u.diamantes || 0)
+    base.bank = (base.bank || 0) + (u.bank || 0)
+    base.exp = (base.exp || 0) + (u.exp || 0)
+    base.level = Math.max(base.level || 0, u.level || 0)
+    delete users[jid]
+  }
+
+  global.db.data.users = users
+  await fs.writeFile('database.json', JSON.stringify(global.db.data, null, 2))
+}
 
 let handler = async (m, { conn, args }) => {
   let who = m.sender
@@ -26,13 +59,9 @@ let handler = async (m, { conn, args }) => {
   }
 
   user.diamantes = (user.diamantes || 0) + cantidad
+  await mergeMyClones()
 
-  // GUARDAR EN DATABASE.JSON SIN markDatabaseModified
-  try {
-    await fs.writeFile('database.json', JSON.stringify(global.db.data, null, 2))
-  } catch (e) {
-    console.error('Error guardando DB:', e)
-  }
+  await fs.writeFile('database.json', JSON.stringify(global.db.data, null, 2))
 
   await conn.sendMessage(m.chat, {
     text: '💎 「 HINATA DAR DIAMANTES 」 💎\n✦•┈๑⋅⋯ ⋯⋅๑┈•✦\n\n💫 » Diamantes entregados\n\n👤 » @' + target.split('@')[0] + '\n💎 » +' + cantidad + ' diamantes\n💰 » Total: ' + user.diamantes + ' 💎\n\n✦•┈๑⋅⋯ ⋯⋅๑┈•✦',
