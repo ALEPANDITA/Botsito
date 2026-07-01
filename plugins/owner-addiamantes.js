@@ -1,4 +1,6 @@
 let handler = async (m, { conn, args }) => {
+  const fs = require('fs')
+  
   let who = m.sender
   let owners = ['5217732654942@s.whatsapp.net', '573223090406@s.whatsapp.net']
 
@@ -24,7 +26,13 @@ let handler = async (m, { conn, args }) => {
   }
 
   user.diamantes = (user.diamantes || 0) + cantidad
-  global.markDatabaseModified()
+  
+  // GUARDAR MANUALMENTE sin usar markDatabaseModified()
+  try {
+    fs.writeFileSync('database.json', JSON.stringify(global.db.data))
+  } catch (e) {
+    console.error('Error guardando DB:', e)
+  }
 
   await conn.sendMessage(m.chat, {
     text: '💎 「 HINATA DAR DIAMANTES 」 💎\n✦•┈๑⋅⋯ ⋯⋅๑┈•✦\n\n💫 » Diamantes entregados\n\n👤 » @' + target.split('@')[0] + '\n💎 » +' + cantidad + ' diamantes\n💰 » Total: ' + user.diamantes + ' 💎\n\n✦•┈๑⋅⋯ ⋯⋅๑┈•✦',
