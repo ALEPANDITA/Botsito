@@ -1,43 +1,25 @@
-import { promises as fs } from 'fs'
+// plugins/owner/fixdb.js — ejecutar una vez con .fixdb y luego borrar
+const handler = async (m, { conn }) => {
+  const users = global.db.data.users
+  const LID  = '204148502954022@lid'
+  const REAL = '573223090406@s.whatsapp.net'
 
-let handler = async (m, { conn }) => {
-  const DB_PATH = './database.json'
-  const MAIN = '573223090406@s.whatsapp.net'
-  const LIDS = ['204148502954022@lid']
+  if (!users[LID]) return m.reply('✅ No hay LID que limpiar')
 
-  try {
-    const raw = await fs.readFile(DB_PATH, 'utf8')
-    const data = JSON.parse(raw)
-    const users = data.users || {}
+  if (!users[REAL]) users[REAL] = { diamantes: 0, bank: 0, exp: 0, level: 0 }
 
-    const mainUser = users[MAIN] || (users[MAIN] = { diamantes: 0, bank: 0, exp: 0, level: 0 })
-    const removed = []
+  const antes = users[REAL].diamantes || 0
+  users[REAL].diamantes += users[LID].diamantes || 0
+  users[REAL].bank      += users[LID].bank || 0
+  users[REAL].exp       += users[LID].exp || 0
+  delete users[LID]
 
-    for (const lid of LIDS) {
-      const u = users[lid]
-      if (!u) continue
-      mainUser.diamantes = (mainUser.diamantes || 0) + (u.diamantes || 0)
-      mainUser.bank = (mainUser.bank || 0) + (u.bank || 0)
-      mainUser.exp = (mainUser.exp || 0) + (u.exp || 0)
-      mainUser.level = Math.max(mainUser.level || 0, u.level || 0)
-      delete users[lid]
-      removed.push(lid)
-    }
+  const { promises: fs } = await import('fs')
+  await fs.writeFile('./database.json', JSON.stringify(global.db.data, null, 2))
 
-    data.users = users
-    await fs.writeFile(DB_PATH, JSON.stringify(data, null, 2))
-
-    await conn.sendMessage(m.chat, {
-      text: '✅ LID fusionado.\n\n🟢 Principal: ' + MAIN + '\n🗑️ Eliminados: ' + removed.length + '\n\nAhora prueba .rank y .banco'
-    }, { quoted: m })
-  } catch (e) {
-    await conn.sendMessage(m.chat, {
-      text: '❌ Error fusionando LID: ' + e.message
-    }, { quoted: m })
-  }
+  m.reply(`✅ DB limpia\n💎 ${REAL}\nAntes: ${antes} → Ahora: ${users[REAL].diamantes}`)
 }
-
-handler.help = ['fusionarlid']
+handler.command = ['fixdb']
 handler.tags = ['owner']
-handler.command = /^(fusionarlid|mergelid|cleanlid)$/i
+handler.owner = true
 export default handler
