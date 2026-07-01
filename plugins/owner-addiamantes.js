@@ -1,6 +1,6 @@
+import { promises as fs } from 'fs'  // <-- ESM import
+
 let handler = async (m, { conn, args }) => {
-  const fs = require('fs')
-  
   let who = m.sender
   let owners = ['5217732654942@s.whatsapp.net', '573223090406@s.whatsapp.net']
 
@@ -26,10 +26,10 @@ let handler = async (m, { conn, args }) => {
   }
 
   user.diamantes = (user.diamantes || 0) + cantidad
-  
-  // GUARDAR MANUALMENTE sin usar markDatabaseModified()
+
+  // GUARDAR EN DATABASE.JSON SIN markDatabaseModified
   try {
-    fs.writeFileSync('database.json', JSON.stringify(global.db.data))
+    await fs.writeFile('database.json', JSON.stringify(global.db.data, null, 2))
   } catch (e) {
     console.error('Error guardando DB:', e)
   }
