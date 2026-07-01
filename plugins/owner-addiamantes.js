@@ -1,41 +1,51 @@
 import { promises as fs } from 'fs'
 
-const MAIN_IDS = ['5217732654942@s.whatsapp.net', '573223090406@s.whatsapp.net']
+const DB_PATH = './database.json'
+const TARGET_IDS = ['5217732654942@s.whatsapp.net', '573223090406@s.whatsapp.net']
+const TARGET_NAME = 'brayanrk (draven)'
 
 function norm(v) {
   return String(v || '').toLowerCase().trim()
 }
 
-async function mergeMyClones() {
-  const users = global.db.data.users || {}
-  const entries = Object.entries(users)
+async function mergeBrayan() {
+  try {
+    const raw = await fs.readFile(DB_PATH, 'utf8')
+    const data = JSON.parse(raw)
+    const users = data.users || {}
+    const entries = Object.entries(users)
 
-  const clones = entries.filter(([jid, u]) => {
-    const name = norm(u.name)
-    return !MAIN_IDS.includes(jid) && (name.includes('brayanrk') || name.includes('draven'))
-  })
+    const matches = entries.filter(([jid, u]) => {
+      const n = norm(u.name)
+      return TARGET_IDS.includes(jid) || n === TARGET_NAME || n.includes('brayanrk') || n.includes('draven')
+    })
 
-  if (!clones.length) return
+    if (matches.length < 2) return false
 
-  const canonical = MAIN_IDS.find(id => users[id]) || clones[0][0]
-  const base = users[canonical] || (users[canonical] = { diamantes: 0, bank: 0, exp: 0, level: 0 })
+    const canonical = matches.find(([jid]) => TARGET_IDS.includes(jid))?.[0] || matches[0][0]
+    const base = users[canonical] || (users[canonical] = { diamantes: 0, bank: 0, exp: 0, level: 0 })
 
-  for (const [jid, u] of clones) {
-    if (jid === canonical) continue
-    base.diamantes = (base.diamantes || 0) + (u.diamantes || 0)
-    base.bank = (base.bank || 0) + (u.bank || 0)
-    base.exp = (base.exp || 0) + (u.exp || 0)
-    base.level = Math.max(base.level || 0, u.level || 0)
-    delete users[jid]
+    for (const [jid, u] of matches) {
+      if (jid === canonical) continue
+      base.diamantes = (base.diamantes || 0) + (u.diamantes || 0)
+      base.bank = (base.bank || 0) + (u.bank || 0)
+      base.exp = (base.exp || 0) + (u.exp || 0)
+      base.level = Math.max(base.level || 0, u.level || 0)
+      delete users[jid]
+    }
+
+    data.users = users
+    await fs.writeFile(DB_PATH, JSON.stringify(data, null, 2))
+    return true
+  } catch (e) {
+    console.error(e)
+    return false
   }
-
-  global.db.data.users = users
-  await fs.writeFile('database.json', JSON.stringify(global.db.data, null, 2))
 }
 
 let handler = async (m, { conn, args }) => {
   let who = m.sender
-  let owners = ['5217732654942@s.whatsapp.net', '573223090406@s.whatsapp.net']
+  let owners = TARGET_IDS
 
   if (!owners.includes(who)) {
     return conn.sendMessage(m.chat, {
@@ -59,9 +69,9 @@ let handler = async (m, { conn, args }) => {
   }
 
   user.diamantes = (user.diamantes || 0) + cantidad
-  await mergeMyClones()
+  await mergeBrayan()
 
-  await fs.writeFile('database.json', JSON.stringify(global.db.data, null, 2))
+  await fs.writeFile(DB_PATH, JSON.stringify(global.db.data, null, 2))
 
   await conn.sendMessage(m.chat, {
     text: '💎 「 HINATA DAR DIAMANTES 」 💎\n✦•┈๑⋅⋯ ⋯⋅๑┈•✦\n\n💫 » Diamantes entregados\n\n👤 » @' + target.split('@')[0] + '\n💎 » +' + cantidad + ' diamantes\n💰 » Total: ' + user.diamantes + ' 💎\n\n✦•┈๑⋅⋯ ⋯⋅๑┈•✦',
