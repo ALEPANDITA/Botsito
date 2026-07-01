@@ -2,8 +2,8 @@ let handler = async (m, { conn }) => {
   let who = m.sender
   let users = global.db.data.users
   let sorted = Object.entries(users)
-    .filter(([id, user]) => (user.diamantes || 0) + (user.bank || 0) > 0)
-    .sort((a, b) => ((b[1].diamantes || 0) + (b[1].bank || 0)) - ((a[1].diamantes || 0) + (a[1].bank || 0)))
+    .filter(([id, user]) => (user.diamantes || 0) > 0)
+    .sort((a, b) => ((b[1].diamantes || 0)) - ((a[1].diamantes || 0)))
     .slice(0, 10)
 
   let mentions = sorted.map(([id]) => id)
@@ -15,17 +15,16 @@ let handler = async (m, { conn }) => {
 
   for (let i = 0; i < sorted.length; i++) {
     let [id, u] = sorted[i]
-    let total = (u.diamantes || 0) + (u.bank || 0)
-    texto += medallas[i] + ' » @' + id.split('@')[0] + '\n   💎 ' + total + ' | 💰 ' + (u.diamantes || 0) + ' | 🏦 ' + (u.bank || 0) + '\n\n'
+    texto += medallas[i] + ' » @' + id.split('@')[0] + '\n   💎 ' + (u.diamantes || 0) + ' | 💰 ' + (u.diamantes || 0) + ' | 🏦 ' + (u.bank || 0) + '\n\n'
   }
 
   texto += '▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔\n'
 
-  let allSorted = Object.entries(users).filter(([id, user]) => (user.diamantes || 0) + (user.bank || 0) > 0).sort((a, b) => ((b[1].diamantes || 0) + (b[1].bank || 0)) - ((a[1].diamantes || 0) + (a[1].bank || 0)))
+  let allSorted = Object.entries(users).filter(([id, user]) => (user.diamantes || 0) > 0).sort((a, b) => ((b[1].diamantes || 0)) - ((a[1].diamantes || 0)))
   let myPosition = allSorted.findIndex(([id]) => id === who)
   let myUser = users[who]
-  let myTotal = (myUser?.diamantes || 0) + (myUser?.bank || 0)
-  texto += '\n🎯 » Tu posición: #' + (myPosition + 1 || '?') + ' | 💎 ' + myTotal + '\n\n▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔'
+  let myDiamantes = (myUser?.diamantes || 0)
+  texto += '\n🎯 » Tu posición: #' + (myPosition + 1 || '?') + ' | 💎 ' + myDiamantes + '\n\n▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔'
 
   await conn.sendMessage(m.chat, { text: texto, mentions }, { quoted: m })
 }
