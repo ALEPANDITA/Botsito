@@ -5,16 +5,19 @@ let handler = async (m, { conn, args }) => {
   const DB_PATH = './database.json'
   const owners = ['5217732654942@s.whatsapp.net', '573223090406@s.whatsapp.net']
 
-  if (!owners.includes(m.sender)) {
+  // ✅ usar _sender si fue resuelto en handler.js
+  const senderReal = m._sender || m.sender
+
+  if (!owners.includes(senderReal)) {
     return conn.sendMessage(m.chat, {
       text: '💎 「 HINATA DAR DIAMANTES 」 💎\n✦•┈๑⋅⋯ ⋯⋅๑┈•✦\n\n💫 » Solo los creadores pueden usar esto\n\n✦•┈๑⋅⋯ ⋯⋅๑┈•✦'
     }, { quoted: m })
   }
 
-  const rawTarget = m.mentionedJid?.[0] || m.quoted?.sender || m.sender
+  // ✅ usar senderReal en vez de m.sender como fallback
+  const rawTarget = m.mentionedJid?.[0] || m.quoted?.sender || senderReal
   const target = resolveToReal(rawTarget)
 
-  // Si había datos en el LID, fusionarlos al JID real
   if (rawTarget !== target && global.db.data.users[rawTarget]) {
     const lidData = global.db.data.users[rawTarget]
     if (!global.db.data.users[target]) {
